@@ -72,5 +72,12 @@ jobs:
       name: github-pages
       url: ${{ steps.deploy.outputs.page_url }}
     steps:
+      # enablement: true accende GitHub Pages da solo, cosi' il primo giro
+      # funziona anche se l'impostazione non e' stata toccata a mano.
+      - name: Accendi Pages se serve
+        uses: actions/configure-pages@v5
+        with:
+          enablement: true
+
       - id: deploy
         uses: actions/deploy-pages@v4
