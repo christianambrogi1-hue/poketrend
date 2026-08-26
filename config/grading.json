@@ -1,0 +1,43 @@
+{
+  "_avvertenza": "STIMA MODELLATA, NON PREZZO RILEVATO. Nessuna fonte gratuita espone prezzi reali di carte gradate. Questi numeri sono moltiplicatori applicati al prezzo raw NM (trend Cardmarket). Servono a dare un ordine di grandezza e a decidere se vale la pena controllare le vendite reali: per il prezzo vero usa i link a eBay sold e PriceCharting che la scheda carta genera per ogni carta.",
+  "_fonti_moltiplicatori": [
+    "PokemonPriceTracker, Raw vs Graded ROI 2026: PSA 10 moderne 2-5x il raw; PSA 10 vintage 5-10x; PSA 9 vale il 30-50% di un PSA 10; PSA 8 spesso sotto il raw NM; carte sotto i 10 $ raw guadagnano meno del 70%.",
+    "Stessa fonte: CGC quota tipicamente il 10-20% in meno del PSA di pari voto; BGS ha la liquidita' piu' bassa sul mercato Pokemon."
+  ],
+  "eras": {
+    "vintage": { "untilYear": 2003 },
+    "retro": { "untilYear": 2019 },
+    "modern": { "untilYear": 9999 }
+  },
+  "psa10MultiplierOnRaw": {
+    "_nota": "Moltiplicatore del prezzo raw NM per ottenere la stima PSA 10. Scaglionato per fascia di valore raw perche' il premio da gradazione cresce col valore della carta.",
+    "vintage": [ { "maxRaw": 10, "x": 3.0 }, { "maxRaw": 100, "x": 6.0 }, { "maxRaw": null, "x": 8.0 } ],
+    "retro":   [ { "maxRaw": 10, "x": 2.0 }, { "maxRaw": 100, "x": 3.5 }, { "maxRaw": null, "x": 5.0 } ],
+    "modern":  [ { "maxRaw": 10, "x": 1.7 }, { "maxRaw": 100, "x": 3.0 }, { "maxRaw": null, "x": 4.0 } ]
+  },
+  "gradeRatioOfPsa10": {
+    "_nota": "Quanto vale ogni voto rispetto al PSA 10 della stessa carta.",
+    "10": 1.0,
+    "9.5": 0.62,
+    "9": 0.4,
+    "8.5": 0.26,
+    "8": 0.18,
+    "7": 0.12,
+    "6": 0.09,
+    "5": 0.07
+  },
+  "houses": [
+    { "id": "psa",   "name": "PSA",          "country": "US", "factor": 1.0,  "grades": ["10","9","8","7"],            "confidence": "media",       "note": "Riferimento del mercato: e' la casa su cui sono calibrati i moltiplicatori." },
+    { "id": "bgs",   "name": "BGS Beckett",  "country": "US", "factor": 0.9,  "grades": ["10","9.5","9","8.5"],        "confidence": "bassa",       "note": "Liquidita' bassa sul Pokemon. Il Black Label 10 fa storia a se' e non e' stimato qui." },
+    { "id": "cgc",   "name": "CGC",          "country": "US", "factor": 0.85, "grades": ["10","9.5","9","8.5"],        "confidence": "media-bassa", "note": "Quota tipicamente il 10-20% sotto il PSA di pari voto." },
+    { "id": "sgc",   "name": "SGC",          "country": "US", "factor": 0.8,  "grades": ["10","9","8"],                "confidence": "bassa",       "note": "Piu' forte sullo sport che sul Pokemon." },
+    { "id": "tag",   "name": "TAG Grading",  "country": "US", "factor": 0.75, "grades": ["10","9.5","9"],              "confidence": "bassa",       "note": "Casa recente, mercato secondario ancora sottile." },
+    { "id": "ace",   "name": "ACE Grading",  "country": "UK", "factor": 0.65, "grades": ["10","9.5","9"],              "confidence": "bassa",       "note": "Diffusa in Europa, premio inferiore alle case americane." },
+    { "id": "graad", "name": "GRAAD",        "country": "EU", "factor": 0.5,  "grades": ["10","9.5","9","8"],          "confidence": "molto bassa", "note": "Casa europea. Costi e tempi migliori, ma il mercato secondario e' sottile: la stima e' poco piu' di un ordine di grandezza." },
+    { "id": "ap",    "name": "AP Grading",   "country": "IT", "factor": 0.45, "grades": ["10","9.5","9","8"],          "confidence": "molto bassa", "note": "Casa italiana. Volumi di rivendita molto bassi: il valore reale dipende quasi solo dall'acquirente che trovi." }
+  ],
+  "verificaReale": {
+    "ebaySoldUrl": "https://www.ebay.it/sch/i.html?_nkw={query}&LH_Sold=1&LH_Complete=1",
+    "priceChartingUrl": "https://www.pricecharting.com/search-products?type=prices&q={query}"
+  }
+}

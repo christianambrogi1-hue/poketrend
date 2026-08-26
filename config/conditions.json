@@ -1,0 +1,17 @@
+{
+  "_nota": "STIMA, non prezzo rilevato. Cardmarket non pubblica storici per condizione: gli unici due ancoraggi reali sono 'trend' (mercato corrente, di fatto NM) e 'low' (offerta piu' bassa in qualsiasi condizione). Le condizioni intermedie sono interpolate. Il coefficiente e' relativo a NM = 1.00.",
+  "anchors": { "nm": "trend", "floor": "low" },
+  "coefficients": {
+    "MT": 1.12,
+    "NM": 1.0,
+    "EX": 0.84,
+    "GD": 0.68,
+    "LP": 0.54,
+    "PL": 0.41,
+    "PO": 0.29
+  },
+  "rule": "stima = max(low, trend * coefficiente). Il pavimento 'low' evita stime sotto la piu' bassa offerta reale sul mercato.",
+  "confidence": {
+    "MT": "bassa", "NM": "alta", "EX": "media", "GD": "media", "LP": "bassa", "PL": "bassa", "PO": "bassa"
+  }
+}

@@ -1,0 +1,20 @@
+{
+  "_nota": "Fasce di prezzo in EUR calcolate sul prezzo trend Cardmarket della carta raw (non gradata). Modificabili: il resto della pipeline le legge da qui.",
+  "currency": "EUR",
+  "bands": [
+    { "id": "b0", "label": "fino a 1 €", "min": 0, "max": 1 },
+    { "id": "b1", "label": "1 – 5 €", "min": 1, "max": 5 },
+    { "id": "b2", "label": "5 – 15 €", "min": 5, "max": 15 },
+    { "id": "b3", "label": "15 – 50 €", "min": 15, "max": 50 },
+    { "id": "b4", "label": "50 – 150 €", "min": 50, "max": 150 },
+    { "id": "b5", "label": "150 – 500 €", "min": 150, "max": 500 },
+    { "id": "b6", "label": "oltre 500 €", "min": 500, "max": null }
+  ],
+  "noise": {
+    "_nota": "Filtri anti-rumore. Una carta da 0,03 € che passa a 0,09 € e' +200% ma non e' un segnale: serve anche un movimento assoluto minimo e un prezzo minimo.",
+    "minTrend": 0.15,
+    "minAbsChangeEur": 0.20,
+    "minAbsChangePctOfPrice": 0.02,
+    "winsorizePct": 3.0
+  }
+}
