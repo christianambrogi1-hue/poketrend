@@ -360,7 +360,7 @@ function rowHtml(c, p, src, vol){
   const thin = vol != null && vol > THIN;
   return `<button class="row" data-id="${esc(c.id)}">
     <span class="nm">${esc(c.ni || c.n)}</span>
-    <span class="meta"><span style="overflow:hidden;text-overflow:ellipsis">${esc(c.l)}/${c.so ?? c.st ?? '?'} · ${esc(c.sn)}</span>${thin?'<span class="tag thin">pochi scambi</span>':''}${src==='cardmarket-avg'?'<span class="tag est">stima</span>':''}</span>
+    <span class="meta"><span style="overflow:hidden;text-overflow:ellipsis">${esc(c.l)}/${c.so ?? c.st ?? '?'} · ${esc(c.sn)}</span>${src==='cardmarket-avg'?'<span class="tag est">stima</span>':''}</span>
     <span class="val"><span class="pct ${dir}">${arrow} ${pct(p)}</span><span class="eur">${eur(c.pr.t)}</span></span>
     <span class="bar"><i class="${dir}" style="width:${w}%"></i></span>
   </button>`;
