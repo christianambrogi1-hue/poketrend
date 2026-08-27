@@ -6,6 +6,11 @@ on:
     # TCGdex aggiorna i prezzi Cardmarket intorno alle 15:00 UTC del giorno
     # prima, quindi a quest'ora il dato del giorno precedente e' gia' stabile.
     - cron: '10 5 * * *'
+    # Seconda sveglia di riserva: GitHub dichiara che i lavori schedulati
+    # possono essere ritardati o saltati, e il 27/08/2026 il giro delle 05:10
+    # non e' partito affatto. Se il primo e' andato a buon fine, l'ingest si
+    # accorge che i prezzi di oggi ci sono gia' ed esce senza interrogare TCGdex.
+    - cron: '25 9 * * *'
   workflow_dispatch:
     inputs:
       bootstrap:
