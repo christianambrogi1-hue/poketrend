@@ -12,6 +12,10 @@ on:
         description: 'Primo giro completo su tutte le carte (lungo, ~1-2 ore)'
         type: boolean
         default: false
+      rebuild:
+        description: 'Solo ricostruzione: salta lo scarico e ripubblica dai dati gia salvati'
+        type: boolean
+        default: false
 
 concurrency:
   group: ingest
@@ -35,6 +39,7 @@ jobs:
         run: node --test test/*.test.mjs
 
       - name: Scarica i prezzi
+        if: inputs.rebuild != true
         run: |
           if [ "${{ inputs.bootstrap }}" = "true" ]; then
             node scripts/ingest.mjs --bootstrap
