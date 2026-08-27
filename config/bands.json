@@ -11,10 +11,12 @@
     { "id": "b6", "label": "oltre 500 €", "min": 500, "max": null }
   ],
   "noise": {
-    "_nota": "Filtri anti-rumore. Una carta da 0,03 € che passa a 0,09 € e' +200% ma non e' un segnale: serve anche un movimento assoluto minimo e un prezzo minimo.",
+    "_nota": "Filtri anti-rumore. Una carta da 0,03 EUR che passa a 0,09 EUR e' +200% ma non e' un segnale: serve anche un movimento assoluto minimo. E soprattutto il prezzo deve reggere il confronto con le offerte reali: vedi maxOfferMultiple.",
     "minTrend": 0.15,
-    "minAbsChangeEur": 0.20,
+    "minAbsChangeEur": 0.2,
     "minAbsChangePctOfPrice": 0.02,
-    "winsorizePct": 3.0
+    "winsorizePct": 3.0,
+    "maxOfferMultiple": 20,
+    "_nota_maxOfferMultiple": "Quante volte l'offerta piu' bassa puo' stare sotto il prezzo di mercato prima che il prezzo diventi inattendibile. Sui dati reali del 26/08/2026 la mediana di offerta/trend e' 0,22, cioe' un rapporto di 4,5 volte. A 20 si scartano solo i casi impossibili, non i rialzi veri. Alza il valore per essere piu' permissivo, abbassalo per classifiche piu' severe."
   }
 }

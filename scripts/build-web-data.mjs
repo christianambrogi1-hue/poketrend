@@ -38,7 +38,7 @@ async function main() {
     for (const [key, days] of Object.entries(PERIODS)) {
       const t = computeTrend(p, hist, days, today);
       if (!t) { trends[key] = null; continue; }
-      trends[key] = { pct: round4(t.pct), src: t.source, sig: isSignificant(t, p.trend, noise) };
+      trends[key] = { pct: round4(t.pct), src: t.source, sig: isSignificant(t, p, noise) };
     }
 
     rows.push({

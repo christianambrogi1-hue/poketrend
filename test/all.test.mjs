@@ -237,3 +237,43 @@ test('store NDJSON: una riga corrotta non fa perdere le altre', async () => {
   assert.deepEqual(got, { a: { t: 1 }, c: { t: 3 } });
   fs.unlinkSync(f);
 });
+
+// --- plausibilita' rispetto alle offerte reali ---
+// I casi qui sotto sono carte vere lette dalla dashboard il 26/08/2026, quando
+// senza questo filtro l'89% delle carte in classifica era mercato sottile.
+import { isPlausible } from '../scripts/lib/trend.mjs';
+
+test('plausibilita: trend irraggiungibile rispetto alle offerte viene scartato', () => {
+  // Trevenant & Dusknoir GX: trend 96,06 ma si compra a 2 euro. +806% falso.
+  const t = { pct: 8.06, from: 10.6, to: 96.06 };
+  assert.equal(isSignificant(t, { trend: 96.06, low: 2 }, NOISE), false);
+});
+
+test('plausibilita: offerta piu bassa sopra il trend viene scartata', () => {
+  // Dark Steelix: trend 0,97 ma nessuna copia sotto 4,95. -98% falso.
+  const t = { pct: -0.98, from: 44.47, to: 0.97 };
+  assert.equal(isSignificant(t, { trend: 0.97, low: 4.95 }, NOISE), false);
+});
+
+test('plausibilita: anche il valore di confronto deve reggere le offerte', () => {
+  // Zapdos: trend 5,24 e offerta 1, ma media 30 giorni 44,17. E la media a
+  // essere rotta, non il prezzo a essere crollato.
+  const t = { pct: -0.88, from: 44.17, to: 5.24 };
+  assert.equal(isSignificant(t, { trend: 5.24, low: 1 }, NOISE), false);
+});
+
+test('plausibilita: un rialzo vero su carta liquida passa', () => {
+  // M Tyranitar EX: trend 90,17, offerta 6, media 30 giorni 31,45.
+  const t = { pct: 1.87, from: 31.45, to: 90.17 };
+  assert.equal(isSignificant(t, { trend: 90.17, low: 6 }, NOISE), true);
+});
+
+test('plausibilita: senza offerta piu bassa non si scarta per mancanza di prova', () => {
+  assert.equal(isPlausible(50, 25, null, NOISE), true);
+  assert.equal(isPlausible(50, 25, 0, NOISE), true);
+});
+
+test('isSignificant accetta ancora il solo prezzo, senza controllo offerte', () => {
+  const t = { pct: 0.3, from: 100, to: 130 };
+  assert.equal(isSignificant(t, 130, NOISE), true);
+});
