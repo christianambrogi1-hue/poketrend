@@ -10,6 +10,7 @@
 //   node scripts/ingest.mjs --bootstrap   primo giro completo (lungo)
 //   node scripts/ingest.mjs               giro giornaliero
 //   node scripts/ingest.mjs --limit 300   giro ridotto, per provare
+//   node scripts/ingest.mjs --force       rifa' il giro anche se oggi e' gia' stato fatto
 
 import fs from 'node:fs/promises';
 import path from 'node:path';
@@ -34,6 +35,19 @@ const client = new Client({ rps: Number(opt('rps', 4)), log });
 
 async function main() {
   await fs.mkdir(DATA, { recursive: true });
+
+  // Un giro al giorno, e basta. Serve perche' il workflow ha due orari di
+  // partenza: GitHub dichiara che i lavori schedulati possono essere ritardati
+  // o saltati, e il 27/08/2026 quello delle 05:10 non e' partito affatto. Due
+  // sveglie danno due possibilita', questo controllo evita che nei giorni in
+  // cui partono entrambe TCGdex venga interrogato due volte per niente.
+  // --force lo scavalca, per rimediare a un giro andato storto.
+  const fileOggi = path.join(DATA, 'history', `${today}.ndjson`);
+  if (!flag('bootstrap') && !flag('force') && await esiste(fileOggi)) {
+    log(`i prezzi di oggi (${today}) sono gia' stati scaricati: non rifaccio il giro.`);
+    log('usa --force per rifarlo comunque.');
+    return;
+  }
   const state = await readJson(path.join(DATA, 'state.json')) || { rotation: 0, lastMetadata: null, runs: [] };
 
   const needMeta = flag('bootstrap') || !state.lastMetadata ||
@@ -159,6 +173,7 @@ async function appendHistory(prices, updatedIds) {
   log(`storico: ${rows.length} punti aggiunti a ${path.basename(file)}`);
 }
 
+async function esiste(p) { try { await fs.access(p); return true; } catch { return false; } }
 async function readJson(p) { try { return JSON.parse(await fs.readFile(p, 'utf8')); } catch { return null; } }
 async function writeJson(p, v) { await fs.writeFile(p, JSON.stringify(v), 'utf8'); }
 function daysBetween(a, b) { return Math.round((Date.parse(a) - Date.parse(b)) / 86400000); }
