@@ -277,3 +277,10 @@ test('isSignificant accetta ancora il solo prezzo, senza controllo offerte', () 
   const t = { pct: 0.3, from: 100, to: 130 };
   assert.equal(isSignificant(t, 130, NOISE), true);
 });
+
+test('anche la base del confronto deve essere un prezzo, non centesimi', () => {
+  // Pineco 001 (sv01), 27/08/2026: trend 0,39, media 7 giorni 0,03, offerta 0,02.
+  // Senza questo controllo usciva come +1200%, primo in classifica.
+  const t = { pct: 12.0, from: 0.03, to: 0.39 };
+  assert.equal(isSignificant(t, { trend: 0.39, low: 0.02 }, NOISE), false);
+});

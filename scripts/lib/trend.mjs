@@ -95,6 +95,13 @@ export function isSignificant(t, price, noise) {
   const low = typeof price === 'number' ? null : price?.low;
   if (!(trend >= noise.minTrend)) return false;
 
+  // Anche il valore di confronto deve essere un prezzo, non un pulviscolo:
+  // da una base di 3 centesimi non si misura nessuna percentuale. Caso reale
+  // del 27/08/2026: Pineco 001 di sv01, trend 0,39 con media 7 giorni 0,03,
+  // usciva come +1200%. Questo controllo costa 3 carte su 5.128 e porta il
+  // massimo a 7 giorni da +1200% a +388%.
+  if (!(t.from >= noise.minTrend)) return false;
+
   const abs = Math.abs(t.to - t.from);
   if (abs < noise.minAbsChangeEur) return false;
   if (Math.abs(t.pct) < noise.minAbsChangePctOfPrice) return false;

@@ -2,21 +2,56 @@
   "_nota": "Fasce di prezzo in EUR calcolate sul prezzo trend Cardmarket della carta raw (non gradata). Modificabili: il resto della pipeline le legge da qui.",
   "currency": "EUR",
   "bands": [
-    { "id": "b0", "label": "fino a 1 €", "min": 0, "max": 1 },
-    { "id": "b1", "label": "1 – 5 €", "min": 1, "max": 5 },
-    { "id": "b2", "label": "5 – 15 €", "min": 5, "max": 15 },
-    { "id": "b3", "label": "15 – 50 €", "min": 15, "max": 50 },
-    { "id": "b4", "label": "50 – 150 €", "min": 50, "max": 150 },
-    { "id": "b5", "label": "150 – 500 €", "min": 150, "max": 500 },
-    { "id": "b6", "label": "oltre 500 €", "min": 500, "max": null }
+    {
+      "id": "b0",
+      "label": "fino a 1 €",
+      "min": 0,
+      "max": 1
+    },
+    {
+      "id": "b1",
+      "label": "1 – 5 €",
+      "min": 1,
+      "max": 5
+    },
+    {
+      "id": "b2",
+      "label": "5 – 15 €",
+      "min": 5,
+      "max": 15
+    },
+    {
+      "id": "b3",
+      "label": "15 – 50 €",
+      "min": 15,
+      "max": 50
+    },
+    {
+      "id": "b4",
+      "label": "50 – 150 €",
+      "min": 50,
+      "max": 150
+    },
+    {
+      "id": "b5",
+      "label": "150 – 500 €",
+      "min": 150,
+      "max": 500
+    },
+    {
+      "id": "b6",
+      "label": "oltre 500 €",
+      "min": 500,
+      "max": null
+    }
   ],
   "noise": {
-    "_nota": "Filtri anti-rumore. Una carta da 0,03 EUR che passa a 0,09 EUR e' +200% ma non e' un segnale: serve anche un movimento assoluto minimo. E soprattutto il prezzo deve reggere il confronto con le offerte reali: vedi maxOfferMultiple.",
+    "_nota": "Filtri anti-rumore, tarati sui dati reali. minTrend vale sia per il prezzo attuale sia per il valore di confronto: da una base di 3 centesimi non si misura nessuna percentuale.",
     "minTrend": 0.15,
     "minAbsChangeEur": 0.2,
     "minAbsChangePctOfPrice": 0.02,
-    "winsorizePct": 3.0,
+    "winsorizePct": 3,
     "maxOfferMultiple": 20,
-    "_nota_maxOfferMultiple": "Quante volte l'offerta piu' bassa puo' stare sotto il prezzo di mercato prima che il prezzo diventi inattendibile. Sui dati reali del 26/08/2026 la mediana di offerta/trend e' 0,22, cioe' un rapporto di 4,5 volte. A 20 si scartano solo i casi impossibili, non i rialzi veri. Alza il valore per essere piu' permissivo, abbassalo per classifiche piu' severe."
+    "_nota_maxOfferMultiple": "Quante volte il prezzo di mercato puo' stare sopra l'offerta piu' bassa prima di diventare inattendibile. Misurato sulle 19.816 carte reali il 27/08/2026: mediana 7,5, novantesimo percentile 27, novantanovesimo 101. A 20 si scartano i casi impossibili (offerta sopra il prezzo di mercato, prezzo irraggiungibile) senza tagliare i rialzi veri. Abbassalo per classifiche piu' severe."
   }
 }
