@@ -1,0 +1,6 @@
+node_modules/
+shot.mjs
+web/data/
+web/search.mjs
+web/insight.mjs
+data/DEMO
