@@ -6,6 +6,7 @@
   "scripts": {
     "ingest": "node scripts/ingest.mjs",
     "bootstrap": "node scripts/ingest.mjs --bootstrap",
+    "backfill": "node scripts/backfill.mjs",
     "build": "node scripts/build-web-data.mjs",
     "test": "node --test test/*.test.mjs",
     "serve": "node scripts/serve.mjs",

@@ -1,0 +1,7 @@
+{
+  "_nota": "Carte da rileggere ogni giorno qualunque sia il loro prezzo. Servono per le carte che segui di persona e che stanno sotto la soglia automatica (hotMinEur in questo stesso file): senza questa lista finirebbero nella rotazione lenta e il loro grafico avrebbe un punto ogni quattro giorni invece che uno al giorno.",
+  "_formato": "Identificativi TCGdex, gli stessi che compaiono nell'URL della scheda carta. Esempi: 'sv03.5-199', 'svp-074', 'base1-4'.",
+  "hotMinEur": 2,
+  "rotationDays": 4,
+  "ids": []
+}

@@ -59,9 +59,15 @@ TCGdex API ──► scripts/ingest.mjs ──► data/*.ndjson ──► script
    (Cardmarket EUR)                    (nel repo)                                       (su Pages)
 ```
 
-**L'ingest ha due velocità.** TCGdex non pubblica limiti rigidi ma chiede di essere usato con criterio, e i prezzi si leggono una carta alla volta. Quindi ogni notte vengono riaggiornate tutte le carte sopra i 5 € — quelle su cui una classifica ha senso — più un settimo della coda lunga a rotazione. Le variazioni a 7 e 30 giorni restano corrette anche per le carte della coda, perché `avg7` e `avg30` arrivano già calcolate da Cardmarket dentro ogni risposta.
+**L'ingest ha tre velocità.** TCGdex non pubblica limiti rigidi ma chiede di essere usato con criterio, e i prezzi si leggono una carta alla volta. Ogni notte vengono riaggiornate: le carte della watchlist (`config/watchlist.json`), qualunque sia il loro prezzo; tutte le carte sopra i 2 €, che sono esattamente quelle per cui viene pubblicata una serie storica e devono quindi avere un punto al giorno; un quarto della coda lunga a rotazione. In tutto circa 10.000 richieste, contro le 23.500 che costerebbe rileggere tutto ogni giorno.
 
-**Lo storico è il motivo per cui vale la pena lasciarla girare.** Ogni notte viene scritto un file `data/history/AAAA-MM-GG.ndjson` con il prezzo trend di ogni carta riletta. È l'unico modo per avere 3 e 12 mesi di variazione reale senza pagare: nessuna fonte gratuita li vende già pronti.
+**Lo storico è il motivo per cui vale la pena lasciarla girare.** Ogni notte viene scritto un file `data/history/AAAA-MM-GG.ndjson` con il prezzo trend e l'offerta più bassa di ogni carta riletta. È l'unico modo per avere 3 e 12 mesi di variazione reale senza pagare: nessuna fonte gratuita li vende già pronti, e uno storico non si recupera all'indietro.
+
+**I due punti stimati all'inizio.** `npm run backfill` genera due file `data/history/est-AAAA-MM-GG.ndjson` ricavati da `avg7` e `avg30`, così una scheda aperta il primo giorno non mostra un grafico con un punto solo. Le medie vengono collocate al **centro** della loro finestra (−4 e −15 giorni), non al bordo: una media a 30 giorni descrive il mercato di due settimane fa, non di un mese fa. Sono stime dichiarate: il grafico le disegna tratteggiate, e `trendFromHistory` le scarta, quindi nessuna percentuale pubblicata può nascere da un punto stimato.
+
+**Il grafico e l'immagine da pubblicare.** Ogni scheda carta ha il grafico del prezzo con i periodi selezionabili, il tooltip, la tabella dei valori sotto, e un pulsante che genera un PNG verticale 1080×1350 pronto per i social. L'immagine rispetta tre regole fisse: la percentuale non compare mai senza la variazione in euro accanto, il periodo è scritto con le date vere, e se il numero è una stima l'immagine lo dichiara in evidenza. Su una carta da 6 € un gradino da un euro vale il 16%: senza il valore assoluto, un "+33%" è un titolo, non un dato.
+
+**Le serie storiche sono divise per set.** Un file unico con lo storico di tutte le carte arriverebbe a qualche megabyte da scaricare per aprire una scheda. `web/data/series/<set>.json` ne fa scaricare qualche decina di kilobyte, e l'indice `seriesIndex` in `config.json` tiene la regola dei nomi in un posto solo.
 
 **Perché NDJSON ordinato e non un JSON unico.** Git salva ogni versione di un file per intero e poi comprime a delta i blob simili. Un JSON minificato è una riga sola: ogni aggiornamento produrrebbe un blob completamente diverso e il repository crescerebbe di megabyte al giorno. Con una riga per carta, ordinata per id, cambiano solo le righe delle carte davvero riaggiornate.
 
@@ -75,9 +81,10 @@ TCGdex API ──► scripts/ingest.mjs ──► data/*.ndjson ──► script
 
 | Comando | Cosa fa |
 |---|---|
-| `npm test` | 28 test sulla logica di calcolo, ricerca e persistenza |
+| `npm test` | 52 test sulla logica di calcolo, ricerca, storico e persistenza |
 | `npm run bootstrap` | primo giro completo su tutte le carte |
 | `npm run ingest` | giro giornaliero |
+| `npm run backfill` | due punti storici stimati, una volta sola dopo il bootstrap |
 | `npm run ingest -- --limit 200` | giro ridotto, per provare senza aspettare |
 | `npm run build` | ricostruisce il pacchetto per la dashboard |
 | `npm run demo` | dataset dimostrativo con prezzi finti |
@@ -101,6 +108,7 @@ TCGdex API ──► scripts/ingest.mjs ──► data/*.ndjson ──► script
 | `config/bands.json` | fasce di prezzo e soglie anti-rumore |
 | `config/conditions.json` | coefficienti per la stima per qualità |
 | `config/grading.json` | case di gradazione, moltiplicatori e fonti dei moltiplicatori |
+| `config/watchlist.json` | carte da rileggere ogni giorno, soglia quotidiana e giorni di rotazione |
 
 Sono JSON commentati: cambiali e rilancia `npm run build`.
 

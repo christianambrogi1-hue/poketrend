@@ -1,0 +1,723 @@
+<!doctype html>
+<html lang="it">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#0d0d0d" media="(prefers-color-scheme: dark)">
+<meta name="theme-color" content="#f9f9f7" media="(prefers-color-scheme: light)">
+<link rel="manifest" href="./manifest.webmanifest">
+<link rel="icon" href="./icon-180.png" type="image/png">
+<link rel="apple-touch-icon" href="./icon-180.png">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="PokeTrend">
+<title>PokeTrend</title>
+<style>
+:root{
+  color-scheme: light;
+  --plane:#f9f9f7; --surface:#fcfcfb; --surface-2:#f2f1ed;
+  --ink:#0b0b0b; --ink-2:#52514e; --muted:#898781;
+  --grid:#e1e0d9; --axis:#c3c2b7; --ring:rgba(11,11,11,.10);
+  --up:#2a78d6; --down:#e34948; --neutral:#f0efec;
+  --accent:#2a78d6;
+  --warn:#fab219; --serious:#ec835a;
+  --r:14px;
+}
+@media (prefers-color-scheme: dark){
+  :root:not([data-theme="light"]){
+    color-scheme: dark;
+    --plane:#0d0d0d; --surface:#1a1a19; --surface-2:#232322;
+    --ink:#fff; --ink-2:#c3c2b7; --muted:#898781;
+    --grid:#2c2c2a; --axis:#383835; --ring:rgba(255,255,255,.10);
+    --up:#3987e5; --down:#e66767; --neutral:#383835;
+    --accent:#3987e5;
+  }
+}
+:root[data-theme="dark"]{
+  color-scheme: dark;
+  --plane:#0d0d0d; --surface:#1a1a19; --surface-2:#232322;
+  --ink:#fff; --ink-2:#c3c2b7; --muted:#898781;
+  --grid:#2c2c2a; --axis:#383835; --ring:rgba(255,255,255,.10);
+  --up:#3987e5; --down:#e66767; --neutral:#383835;
+  --accent:#3987e5;
+}
+*{box-sizing:border-box}
+body{margin:0;background:var(--plane);color:var(--ink);
+  font:15px/1.45 system-ui,-apple-system,"Segoe UI",sans-serif;
+  padding-bottom:calc(64px + env(safe-area-inset-bottom));-webkit-text-size-adjust:100%}
+h1,h2,h3{margin:0;font-weight:650;letter-spacing:-.01em}
+button{font:inherit;color:inherit;background:none;border:0;cursor:pointer}
+a{color:var(--accent)}
+
+header{position:sticky;top:0;z-index:20;background:var(--plane);
+  border-bottom:1px solid var(--grid);padding:calc(10px + env(safe-area-inset-top)) 16px 10px}
+.brand{display:flex;align-items:baseline;justify-content:space-between;gap:8px}
+.brand h1{font-size:19px}
+.stamp{font-size:11px;color:var(--muted);font-variant-numeric:tabular-nums}
+
+main{padding:14px 16px 24px;max-width:900px;margin:0 auto}
+.panel{display:none}.panel.on{display:block}
+
+.chips{display:flex;gap:6px;overflow-x:auto;scrollbar-width:none;padding:2px 0 8px;-webkit-overflow-scrolling:touch}
+.chips::-webkit-scrollbar{display:none}
+.chip{flex:0 0 auto;padding:7px 13px;border-radius:999px;background:var(--surface-2);
+  color:var(--ink-2);font-size:13px;white-space:nowrap;border:1px solid transparent}
+.chip[aria-pressed="true"]{background:var(--ink);color:var(--plane);font-weight:600}
+.chip:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+
+.card{background:var(--surface);border:1px solid var(--ring);border-radius:var(--r);
+  padding:14px;margin:12px 0}
+.card h2{font-size:15px;display:flex;align-items:center;gap:7px}
+.sub{font-size:12px;color:var(--muted);margin-top:3px}
+
+.rows{margin-top:10px;display:flex;flex-direction:column;gap:2px}
+.row{display:grid;grid-template-columns:minmax(0,1fr) auto;
+  grid-template-areas:"nm val" "meta val" "bar bar";
+  gap:1px 12px;align-items:center;padding:8px;border-radius:9px;text-align:left;width:100%}
+.row:hover,.row:focus-visible{background:var(--surface-2);outline:none}
+.row .nm{grid-area:nm;font-size:14px;font-weight:550;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.row .meta{grid-area:meta;font-size:11.5px;color:var(--muted);
+  overflow:hidden;text-overflow:ellipsis;white-space:nowrap;display:flex;gap:6px;align-items:center}
+.row .val{grid-area:val;text-align:right;font-variant-numeric:tabular-nums;white-space:nowrap}
+.pct{font-size:14px;font-weight:650;display:block;white-space:nowrap}
+.pct.up{color:var(--up)}.pct.down{color:var(--down)}
+.eur{font-size:11.5px;color:var(--ink-2);display:block}
+
+/* barra divergente: lo zero sta al centro, l'ampiezza e' proporzionale
+   alla variazione limitata al +/-100% per non far esplodere gli outlier */
+.bar{grid-area:bar;height:4px;background:var(--neutral);border-radius:2px;
+  position:relative;margin-top:5px}
+.bar i{position:absolute;top:0;height:4px;border-radius:2px;display:block}
+.bar i.up{left:50%;background:var(--up)}
+.bar i.down{right:50%;background:var(--down)}
+.bar::before{content:"";position:absolute;left:50%;top:-2px;width:1px;height:8px;background:var(--axis)}
+
+.tag{font-size:10px;font-weight:600;letter-spacing:.02em;text-transform:uppercase;
+  padding:2px 6px;border-radius:5px;background:var(--surface-2);color:var(--ink-2);
+  border:1px solid var(--ring);white-space:nowrap}
+.tag.est{background:color-mix(in srgb,var(--warn) 18%,transparent);border-color:color-mix(in srgb,var(--warn) 45%,transparent)}
+.tag.thin{background:color-mix(in srgb,var(--serious) 18%,transparent);border-color:color-mix(in srgb,var(--serious) 45%,transparent)}
+
+.search{display:flex;gap:8px;align-items:center;background:var(--surface);
+  border:1px solid var(--ring);border-radius:12px;padding:10px 12px}
+.search input{flex:1;border:0;background:none;color:var(--ink);font-size:16px;outline:none;min-width:0}
+.filters{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:10px}
+select{width:100%;padding:9px 10px;border-radius:10px;background:var(--surface);
+  color:var(--ink);border:1px solid var(--ring);font-size:14px}
+label.f{font-size:11px;color:var(--muted);display:block;margin-bottom:3px}
+
+.tw{overflow-x:auto;-webkit-overflow-scrolling:touch;margin:0 -4px;padding:0 4px}
+table{width:100%;border-collapse:collapse;font-variant-numeric:tabular-nums}
+th,td{text-align:right;padding:7px 6px;font-size:13px;border-bottom:1px solid var(--grid)}
+th:first-child,td:first-child{text-align:left}
+th{font-size:11px;color:var(--muted);font-weight:600;text-transform:uppercase;letter-spacing:.03em}
+tbody tr:last-child td{border-bottom:0}
+
+.kv{display:grid;grid-template-columns:repeat(2,1fr);gap:8px;margin-top:10px}
+.kv div{background:var(--surface-2);border-radius:10px;padding:9px 11px}
+.kv b{display:block;font-size:17px;font-variant-numeric:tabular-nums;font-weight:650}
+.kv span{font-size:11px;color:var(--muted)}
+
+.note{font-size:12px;color:var(--ink-2);background:var(--surface-2);
+  border-left:3px solid var(--warn);border-radius:0 8px 8px 0;padding:9px 11px;margin-top:10px}
+.links{display:flex;flex-wrap:wrap;gap:8px;margin-top:12px}
+.links a{flex:1 1 45%;text-align:center;padding:10px;border-radius:10px;
+  background:var(--surface-2);border:1px solid var(--ring);text-decoration:none;
+  color:var(--ink);font-size:13px;font-weight:550}
+
+nav{position:fixed;bottom:0;left:0;right:0;z-index:30;display:flex;
+  background:var(--surface);border-top:1px solid var(--grid);
+  padding-bottom:env(safe-area-inset-bottom)}
+nav button{flex:1;padding:11px 4px 12px;font-size:11px;color:var(--muted);
+  display:flex;flex-direction:column;align-items:center;gap:3px}
+nav button[aria-current="page"]{color:var(--ink);font-weight:600}
+nav svg{width:21px;height:21px;fill:none;stroke:currentColor;stroke-width:1.8}
+
+dialog{width:min(560px,100%);max-height:88vh;margin:auto auto 0;padding:0;border:0;
+  border-radius:18px 18px 0 0;background:var(--surface);color:var(--ink);overflow:auto}
+dialog::backdrop{background:rgba(0,0,0,.5)}
+.sheet{padding:16px 16px calc(20px + env(safe-area-inset-bottom))}
+.sheet-h{position:sticky;top:0;background:var(--surface);padding-top:6px;
+  display:flex;justify-content:space-between;align-items:flex-start;gap:12px}
+.close{font-size:22px;line-height:1;color:var(--muted);padding:2px 6px}
+.empty{text-align:center;color:var(--muted);font-size:14px;padding:26px 12px}
+.legend{display:flex;gap:14px;font-size:11.5px;color:var(--muted);margin-top:8px;flex-wrap:wrap}
+.legend i{display:inline-block;width:10px;height:10px;border-radius:2px;margin-right:5px;vertical-align:-1px}
+
+/* grafico della scheda carta */
+/* la fascia in alto e' lo spazio riservato al tooltip: senza, coprirebbe
+   la prima tacca del grafico proprio mentre la stai leggendo */
+.chart-wrap{position:relative;margin-top:6px;padding-top:36px}
+.chart-plot{width:100%;touch-action:pan-y}
+.chart-plot svg{display:block;max-width:100%}
+.chart-plot:focus-visible{outline:2px solid var(--accent);outline-offset:3px;border-radius:8px}
+.chart-tip{position:absolute;top:0;pointer-events:none;background:var(--ink);color:var(--plane);
+  border-radius:8px;padding:5px 9px;font-size:11.5px;line-height:1.35;white-space:nowrap;
+  box-shadow:0 4px 14px rgba(0,0,0,.18)}
+.chart-tip b{display:block;font-size:13px;font-variant-numeric:tabular-nums}
+.chart-tip span{opacity:.75}
+.chart-cap{margin-top:2px}
+.chart-table{margin-top:8px}
+.chart-table summary{font-size:12px;color:var(--muted);cursor:pointer;padding:4px 0}
+.chart-table table{margin-top:4px}
+
+/* riquadro della variazione, sopra il grafico */
+.headline{display:flex;align-items:baseline;gap:10px;flex-wrap:wrap;margin-top:10px}
+.headline .big{font-size:30px;font-weight:700;line-height:1}
+.headline .big.up{color:var(--up)}.headline .big.down{color:var(--down)}
+.headline .abs{font-size:16px;font-weight:600}
+.headline .abs.up{color:var(--up)}.headline .abs.down{color:var(--down)}
+.headline .from{font-size:13px;color:var(--ink-2);font-variant-numeric:tabular-nums}
+
+.btn{display:block;width:100%;margin-top:12px;padding:12px;border-radius:11px;
+  background:var(--ink);color:var(--plane);font-size:14px;font-weight:600;text-align:center}
+.btn[disabled]{opacity:.5}
+.btn.ghost{background:var(--surface-2);color:var(--ink);border:1px solid var(--ring)}
+</style>
+</head>
+<body>
+<header>
+  <div class="brand">
+    <h1>PokeTrend</h1>
+    <span class="stamp" id="stamp">carico…</span>
+  </div>
+</header>
+
+<main>
+  <!-- CLASSIFICHE -->
+  <section class="panel on" id="p-top" aria-labelledby="h-top">
+    <h2 id="h-top" style="font-size:13px;color:var(--muted);text-transform:uppercase;letter-spacing:.04em">Periodo</h2>
+    <div class="chips" id="periods" role="group" aria-label="Periodo"></div>
+    <h2 style="font-size:13px;color:var(--muted);text-transform:uppercase;letter-spacing:.04em">Fascia di prezzo</h2>
+    <div class="chips" id="bands" role="group" aria-label="Fascia di prezzo"></div>
+    <div id="board"></div>
+    <div class="legend">
+      <span><i style="background:var(--up)"></i>in salita</span>
+      <span><i style="background:var(--down)"></i>in discesa</span>
+      <span>barra tagliata a ±100%</span>
+    </div>
+  </section>
+
+  <!-- RICERCA -->
+  <section class="panel" id="p-search" aria-labelledby="h-search">
+    <h2 id="h-search" style="font-size:13px;color:var(--muted);text-transform:uppercase;letter-spacing:.04em">Cerca una carta</h2>
+    <div class="search">
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="color:var(--muted);flex:0 0 auto"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg>
+      <input id="q" type="search" inputmode="search" autocomplete="off"
+             placeholder="Charizard, oppure 201/196" aria-label="Nome o numero della carta">
+    </div>
+    <div class="filters">
+      <div><label class="f" for="f-lang">Lingua</label><select id="f-lang"></select></div>
+      <div><label class="f" for="f-cond">Qualità</label><select id="f-cond"></select></div>
+      <div><label class="f" for="f-band">Fascia</label><select id="f-band"></select></div>
+      <div><label class="f" for="f-thin">Scambi</label><select id="f-thin">
+        <option value="all">tutte le carte</option>
+        <option value="liquid">solo carte scambiate spesso</option>
+      </select></div>
+    </div>
+    <div id="results"></div>
+  </section>
+
+  <!-- INFO -->
+  <section class="panel" id="p-info" aria-labelledby="h-info">
+    <h2 id="h-info" style="font-size:13px;color:var(--muted);text-transform:uppercase;letter-spacing:.04em">Che cosa stai guardando</h2>
+    <div id="info"></div>
+  </section>
+</main>
+
+<nav aria-label="Sezioni">
+  <button data-go="p-top" aria-current="page"><svg viewBox="0 0 24 24"><path d="M3 17l5-6 4 4 5-8 4 5"/></svg>Classifiche</button>
+  <button data-go="p-search"><svg viewBox="0 0 24 24"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg>Cerca</button>
+  <button data-go="p-info"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M12 11v5M12 8h.01"/></svg>Info</button>
+</nav>
+
+<dialog id="sheet"><div class="sheet" id="sheet-body"></div></dialog>
+
+<script type="module">
+import { searchCards } from './search.mjs';
+import { renderChart } from './chart.mjs';
+import { computeInsight, windowPoints, fmtEur, fmtPct, fmtSignedEur, daysBetween } from './insight.mjs';
+
+const PERIOD_LABELS = { d7:'7 giorni', d30:'1 mese', d90:'3 mesi', d365:'12 mesi' };
+const RANGES = [
+  { k:'d7', days:7, label:'7 giorni' },
+  { k:'d30', days:30, label:'1 mese' },
+  { k:'d90', days:90, label:'3 mesi' },
+  { k:'d365', days:365, label:'12 mesi' },
+  { k:'all', days:null, label:'tutto' },
+];
+const LANGS = { it:'Italiano', en:'Inglese', ja:'Giapponese', de:'Tedesco', fr:'Francese', es:'Spagnolo' };
+const CM_LANG = { en:1, fr:2, de:3, es:4, it:5, ja:6 };
+const CM_COND = { MT:1, NM:2, EX:3, GD:4, LP:5, PL:6, PO:7 };
+const COND_LABEL = { MT:'Mint', NM:'Near Mint', EX:'Excellent', GD:'Good', LP:'Light Played', PL:'Played', PO:'Poor' };
+const THIN = 0.25;
+
+const S = { period:'d30', band:'b2', lang:'it', cond:'NM', thin:'all', data:null, cfg:null, lb:null,
+  series:new Map(), byId:new Map(), sheet:null };
+const $ = (s) => document.querySelector(s);
+// stessa formattazione della pipeline e dell'immagine esportata: un unico modulo
+const eur = fmtEur;
+const pct = fmtPct;
+const esc = (s) => String(s??'').replace(/[&<>"]/g,(c)=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+
+init();
+
+async function init(){
+  try{
+    const [cards, lb, cfg] = await Promise.all([
+      fetch('./data/cards.json').then(r=>r.json()),
+      fetch('./data/leaderboards.json').then(r=>r.json()),
+      fetch('./data/config.json').then(r=>r.json()),
+    ]);
+    S.lb = lb; S.cfg = cfg;
+    S.data = { generated: cards.generated, rows: unpack(cards) };
+    for (const r of S.data.rows) S.byId.set(r.id, r);
+    $('#stamp').textContent = 'dati del ' + fmtDate(cards.generated);
+  }catch(e){
+    $('#stamp').textContent = 'dati non disponibili';
+    $('#board').innerHTML = `<div class="card"><h2>Dati non caricati</h2><p class="sub">La pagina non ha trovato <code>data/cards.json</code>. Se hai appena installato la dashboard, il primo ingest non &egrave; ancora girato.</p></div>`;
+    return;
+  }
+  buildChips(); buildFilters(); renderBoard(); renderInfo();
+  document.querySelectorAll('nav button').forEach(b=>b.onclick=()=>go(b.dataset.go));
+  $('#q').oninput = debounce(renderSearch, 180);
+  ['f-lang','f-cond','f-band','f-thin'].forEach(id=>$('#'+id).onchange = ()=>{
+    S.lang=$('#f-lang').value; S.cond=$('#f-cond').value; S.thin=$('#f-thin').value; renderSearch();
+  });
+  renderSearch();
+}
+
+/**
+ * Il pacchetto arriva a colonne, non a oggetti: i nomi dei campi sono scritti
+ * una volta sola. Qui torniamo a oggetti, una volta al caricamento.
+ */
+function unpack(pkg){
+  const i = Object.fromEntries(pkg.cols.map((c,k)=>[c,k]));
+  return pkg.rows.map(r=>{
+    const setId = r[i.s];
+    const [sn, so, st, sr] = pkg.sets[setId] || [setId, null, null, ''];
+    const tr = {};
+    for(const k of ['d7','d30','d90','d365']){
+      const pctVal = r[i[k]];
+      tr[k] = pctVal==null ? null : { pct: pctVal, src: r[i[k+'s']]===1 ? 'history' : 'cardmarket-avg' };
+    }
+    const img = r[i.img];
+    return {
+      id: r[i.id], n: r[i.n], ni: r[i.ni], l: r[i.l], s: setId,
+      sn, so, st, sr, b: r[i.b],
+      img: img ? (img.startsWith('http') ? img : pkg.imgBase + img) : null,
+      pr: { t:r[i.t], lo:r[i.lo], a7:r[i.a7], a30:r[i.a30], vol:r[i.vol], cm:r[i.cm],
+            v: r[i.v]===1?'holo':'base', u: pkg.generated,
+            holo: r[i.holoT]!=null ? { trend:r[i.holoT] } : null },
+      tr,
+      names: { it: r[i.ni] || r[i.n], en: r[i.n] },
+      localId: r[i.l], setId, setOfficial: so, setTotal: st, trend: r[i.t], bandId: r[i.b],
+    };
+  });
+}
+
+/**
+ * Le serie storiche stanno in file separati, uno per set: aprire una scheda
+ * scarica qualche decina di kilobyte invece dello storico di ventimila carte.
+ * Il nome del file arriva dall'indice in config.json, cosi' la regola con cui
+ * viene costruito sta in un posto solo, nel build.
+ */
+async function seriesFor(setId){
+  const name = S.cfg.seriesIndex?.[setId];
+  if(!name) return {};
+  if(S.series.has(name)) return S.series.get(name);
+  let out = {};
+  try{ out = (await fetch(`./data/series/${name}.json`).then(r=>r.json())).series || {}; }
+  catch{ out = {}; }
+  S.series.set(name, out);
+  return out;
+}
+
+/** Da [data, prezzo, stima?] a punti veri e propri. */
+function toPoints(raw){
+  return (raw||[]).map(([date,v,est])=>({ date, v, est: est===1 })).filter(p=>p.v>0);
+}
+
+function go(id){
+  document.querySelectorAll('.panel').forEach(p=>p.classList.toggle('on', p.id===id));
+  document.querySelectorAll('nav button').forEach(b=>
+    b.toggleAttribute('aria-current', b.dataset.go===id) || b.setAttribute('aria-current', b.dataset.go===id?'page':'false'));
+  window.scrollTo(0,0);
+}
+
+function buildChips(){
+  const P = $('#periods');
+  P.innerHTML = Object.entries(PERIOD_LABELS).map(([k,v])=>{
+    const ok = hasPeriod(k);
+    return `<button class="chip" data-p="${k}" aria-pressed="${k===S.period}" ${ok?'':'disabled style="opacity:.45" title="serve piu storico"'}>${v}</button>`;
+  }).join('');
+  P.onclick = (e)=>{ const b=e.target.closest('[data-p]'); if(!b||b.disabled) return;
+    S.period=b.dataset.p; buildChips(); renderBoard(); };
+
+  const B = $('#bands');
+  const bands = [...S.lb.bands, {id:'all', label:'tutte'}];
+  B.innerHTML = bands.map(b=>`<button class="chip" data-b="${b.id}" aria-pressed="${b.id===S.band}">${esc(b.label)}</button>`).join('');
+  B.onclick = (e)=>{ const b=e.target.closest('[data-b]'); if(!b) return;
+    S.band=b.dataset.b; buildChips(); renderBoard(); };
+}
+
+function hasPeriod(k){
+  const lb = S.lb.leaderboards[k];
+  if(!lb) return false;
+  return Object.values(lb).some(v=>v.pool>0);
+}
+
+function buildFilters(){
+  $('#f-lang').innerHTML = Object.entries(LANGS).map(([k,v])=>`<option value="${k}" ${k===S.lang?'selected':''}>${v}</option>`).join('');
+  $('#f-cond').innerHTML = Object.entries(COND_LABEL).map(([k,v])=>`<option value="${k}" ${k===S.cond?'selected':''}>${v} (${k})</option>`).join('');
+  $('#f-band').innerHTML = `<option value="">tutte le fasce</option>` +
+    S.lb.bands.map(b=>`<option value="${b.id}">${esc(b.label)}</option>`).join('');
+}
+
+function renderBoard(){
+  const lb = S.lb.leaderboards[S.period]?.[S.band];
+  const label = PERIOD_LABELS[S.period];
+  if(!lb || !lb.pool){
+    const cov = S.cfg.coverage;
+    const from = S.period==='d90' ? cov.availableFrom.d90 : S.period==='d365' ? cov.availableFrom.d365 : null;
+    $('#board').innerHTML = `<div class="card"><h2>Ancora nessun dato per ${label}</h2>
+      <p class="sub">${from
+        ? `Questo periodo si calcola solo sullo storico raccolto giorno per giorno da questa dashboard. Il primo dato utile arriva il <b>${fmtDate(from)}</b>. Nessuna fonte gratuita vende ${label} di storico gia pronto: l'alternativa sarebbe inventarselo.`
+        : `Nessuna carta di questa fascia supera i filtri anti-rumore. Prova un'altra fascia.`}</p></div>`;
+    return;
+  }
+  $('#board').innerHTML =
+    section('In salita', lb.up, 'up', label) +
+    section('In discesa', lb.down, 'down', label) +
+    `<p class="sub" style="margin-top:10px">${lb.pool} carte di questa fascia hanno un movimento abbastanza solido da entrare in classifica.</p>`;
+  document.querySelectorAll('#board .row').forEach(r=>r.onclick=()=>openCard(r.dataset.id));
+}
+
+function section(title, list, dir, label){
+  if(!list.length) return '';
+  const srcs = new Set(list.map(x=>x.src));
+  const mixed = srcs.size > 1;
+  const soloStima = srcs.size === 1 && srcs.has('cardmarket-avg');
+  const rows = list.map(x=>{
+    const c = S.byId.get(x.id); if(!c) return '';
+    return rowHtml(c, x.pct, mixed ? x.src : null, x.vol);
+  }).join('');
+  return `<div class="card"><h2>${title} <span class="tag">${label}</span>${soloStima?' <span class="tag est">stima</span>':''}</h2>
+    ${soloStima?`<p class="sub">Variazione calcolata sullo scostamento fra trend corrente e medie Cardmarket, non su uno storico punto a punto.</p>`:''}
+    <div class="rows">${rows}</div></div>`;
+}
+
+function rowHtml(c, p, src, vol){
+  const w = Math.min(Math.abs(p), 1) * 50;
+  const dir = p >= 0 ? 'up' : 'down';
+  const arrow = p >= 0 ? '▲' : '▼';
+  const thin = vol != null && vol > THIN;
+  return `<button class="row" data-id="${esc(c.id)}">
+    <span class="nm">${esc(c.ni || c.n)}</span>
+    <span class="meta"><span style="overflow:hidden;text-overflow:ellipsis">${esc(c.l)}/${c.so ?? c.st ?? '?'} · ${esc(c.sn)}</span>${thin?'<span class="tag thin">pochi scambi</span>':''}${src==='cardmarket-avg'?'<span class="tag est">stima</span>':''}</span>
+    <span class="val"><span class="pct ${dir}">${arrow} ${pct(p)}</span><span class="eur">${eur(c.pr.t)}</span></span>
+    <span class="bar"><i class="${dir}" style="width:${w}%"></i></span>
+  </button>`;
+}
+
+function renderSearch(){
+  const q = $('#q').value;
+  const bandId = $('#f-band').value || null;
+  let pool = S.data.rows;
+  if(S.thin==='liquid') pool = pool.filter(r=>r.pr.vol==null || r.pr.vol<=THIN);
+  const res = searchCards(pool, q, { lang:'it', limit:60, filters:{ bandId } });
+  if(!res.length){
+    $('#results').innerHTML = `<div class="empty">Nessuna carta trovata.<br>Prova col solo nome, o col numero nel formato <b>201/196</b>.</div>`;
+    return;
+  }
+  $('#results').innerHTML = `<div class="card"><h2>${res.length}${res.length===60?'+':''} risultati</h2><div class="rows">` +
+    res.map(c=>{
+      const t = c.tr[S.period];
+      const est = estCondition(c.pr, S.cond);
+      const thin = c.pr.vol!=null && c.pr.vol>THIN;
+      return `<button class="row" data-id="${esc(c.id)}">
+        <span class="nm">${esc(c.ni||c.n)}</span>
+        <span class="meta"><span style="overflow:hidden;text-overflow:ellipsis">${esc(c.l)}/${c.so ?? c.st ?? '?'} · ${esc(c.sn)}</span>${thin?'<span class="tag thin">pochi scambi</span>':''}</span>
+        <span class="val"><span class="pct ${t&&t.pct>=0?'up':'down'}">${t?pct(t.pct):'—'}</span>
+        <span class="eur">${eur(est)} ${S.cond}</span></span></button>`;
+    }).join('') + `</div><p class="sub">Prezzo mostrato per qualità <b>${COND_LABEL[S.cond]}</b>. Solo NM è un prezzo rilevato: le altre qualità sono stime.</p></div>`;
+  document.querySelectorAll('#results .row').forEach(r=>r.onclick=()=>openCard(r.dataset.id));
+}
+
+function estCondition(pr, cond){
+  const cfg = S.cfg.conditions;
+  const coef = cfg.coefficients[cond];
+  if(coef==null || !(pr.t>0)) return null;
+  if(cond==='NM') return pr.t;
+  return Math.max(pr.lo || 0, pr.t * coef);
+}
+
+function openCard(id){
+  const c = S.byId.get(id); if(!c) return;
+  const g = gradedFor(c);
+  const conds = Object.keys(S.cfg.conditions.coefficients);
+  const thin = c.pr.vol!=null && c.pr.vol>THIN;
+
+  $('#sheet-body').innerHTML = `
+    <div class="sheet-h">
+      <div>
+        <h2 style="font-size:18px">${esc(c.ni||c.n)}</h2>
+        <p class="sub">${esc(c.l)}/${c.so ?? c.st ?? '?'} · ${esc(c.sn)}${c.sr?' · '+fmtDate(c.sr):''}${c.ni&&c.ni!==c.n?` · ${esc(c.n)}`:''}</p>
+      </div>
+      <button class="close" aria-label="Chiudi">×</button>
+    </div>
+
+    <h3 style="margin-top:14px;font-size:14px">Prezzo raw <span class="tag">rilevato</span></h3>
+    <div class="kv">
+      <div><b>${eur(c.pr.t)}</b><span>trend Cardmarket</span></div>
+      <div><b>${eur(c.pr.lo)}</b><span>offerta più bassa</span></div>
+      <div><b>${eur(c.pr.a7)}</b><span>media 7 giorni</span></div>
+      <div><b>${eur(c.pr.a30)}</b><span>media 30 giorni</span></div>
+    </div>
+    ${c.pr.holo?`<p class="sub" style="margin-top:8px">Versione holo/reverse: <b>${eur(c.pr.holo.trend)}</b> — è un prodotto diverso, con un suo prezzo.</p>`:''}
+    ${thin?`<div class="note">Le quattro misure di prezzo di questa carta divergono molto fra loro (${(c.pr.vol*100).toFixed(0)}%): significa pochi scambi. La variazione percentuale qui vale poco.</div>`:''}
+
+    <div id="chart-slot"><p class="sub" style="margin-top:14px">Carico lo storico…</p></div>
+
+    <h3 style="margin-top:16px;font-size:14px">Variazione</h3>
+    <div class="tw"><table><tbody>${Object.entries(PERIOD_LABELS).map(([k,v])=>{
+      const t = c.tr[k];
+      return `<tr><td>${v}</td>
+        <td>${t?`<span class="pct ${t.pct>=0?'up':'down'}" style="font-size:13px">${pct(t.pct)}</span>`:'<span style="color:var(--muted)">non disponibile</span>'}</td>
+        <td style="font-size:11px;color:var(--muted)">${t? (t.src==='history'?'storico':'stima da medie') : (k==='d90'||k==='d365' ? 'dal '+fmtDate(S.cfg.coverage.availableFrom[k]) : '—')}</td></tr>`;
+    }).join('')}</tbody></table></div>
+
+    <h3 style="margin-top:16px;font-size:14px">Per qualità <span class="tag est">stima</span></h3>
+    <div class="tw"><table><thead><tr><th>Qualità</th><th>Valore</th><th>Affidabilità</th></tr></thead>
+    <tbody>${conds.map(k=>{
+      const v = estCondition(c.pr, k);
+      return `<tr><td>${COND_LABEL[k]} <span style="color:var(--muted)">${k}</span></td>
+      <td>${eur(v)}</td><td style="font-size:11px;color:var(--muted)">${k==='NM'?'rilevato':S.cfg.conditions.confidence[k]}</td></tr>`;
+    }).join('')}</tbody></table></div>
+    <div class="note">Cardmarket non pubblica storici per condizione. Gli unici due valori reali sono il trend (di fatto NM) e l'offerta più bassa. Il resto è interpolato, mai sotto l'offerta più bassa reale.</div>
+
+    <h3 style="margin-top:16px;font-size:14px">Gradata <span class="tag est">stima</span></h3>
+    ${g ? `<div class="tw"><table><thead><tr><th>Casa</th>${g.grades.map(x=>`<th>voto ${x}</th>`).join('')}</tr></thead>
+      <tbody>${g.houses.map(h=>`<tr>
+      <td style="min-width:104px"><span style="display:block;font-weight:550;white-space:nowrap">${esc(h.name)}</span>
+          <span style="font-size:10.5px;color:var(--muted);white-space:nowrap">${esc(h.country)} · ${esc(h.confidence)}</span></td>
+      ${g.grades.map(x=>`<td>${h.grades[x]!=null?eur(h.grades[x]):'<span style="color:var(--muted)">–</span>'}</td>`).join('')}
+      </tr>`).join('')}</tbody></table></div>` : '<p class="sub">Prezzo raw troppo basso perché una stima significhi qualcosa.</p>'}
+    <div class="note">Questi non sono prezzi rilevati: sono moltiplicatori applicati al prezzo raw NM, tarati su dati pubblici di mercato (PSA 10 vale 2-5× il raw sulle moderne, 5-10× sulle vintage; PSA 9 circa il 40% di un PSA 10; CGC il 10-20% sotto PSA). Per GRAAD e AP Grading il mercato secondario è troppo sottile perché la stima valga più di un ordine di grandezza. Il numero vero si controlla sulle vendite reali, qui sotto.</div>
+
+    <div class="links">
+      <a href="${cmLink(c)}" target="_blank" rel="noopener">Offerte Cardmarket<br><span style="font-size:11px;color:var(--muted)">${LANGS[S.lang]} · ${S.cond}+</span></a>
+      <a href="${ebayLink(c)}" target="_blank" rel="noopener">eBay venduti<br><span style="font-size:11px;color:var(--muted)">prezzi reali gradate</span></a>
+      <a href="${pcLink(c)}" target="_blank" rel="noopener">PriceCharting<br><span style="font-size:11px;color:var(--muted)">valori gradati US</span></a>
+      ${c.img?`<a href="${esc(c.img)}/high.webp" target="_blank" rel="noopener">Immagine carta</a>`:''}
+    </div>
+    <p class="sub" style="margin-top:12px">Prezzi Cardmarket in euro, aggiornati al ${fmtDate(c.pr.u||S.data.generated)}. Il prezzo è quello del prodotto Cardmarket, che aggrega tutte le lingue: il filtro lingua qui sopra apre le offerte reali in ${LANGS[S.lang]}.</p>
+  `;
+  const d = $('#sheet');
+  $('#sheet-body .close').onclick = ()=>d.close();
+  d.onclose = ()=>{ S.sheet?.destroy?.(); S.sheet = null; };
+  d.showModal();
+  seriesFor(c.s).then(all=>mountChart(c, toPoints(all[c.id])));
+}
+
+/**
+ * Grafico, variazione ed esportazione della scheda carta.
+ * Il periodo scelto qui comanda tutto: finestra del grafico, numero in evidenza
+ * e immagine esportata leggono lo stesso oggetto, cosi' non possono raccontare
+ * tre cose diverse.
+ */
+function mountChart(card, pts){
+  const slot = $('#chart-slot');
+  if(!slot) return;
+  const today = S.data.generated;
+
+  if(pts.length < 2){
+    slot.innerHTML = `<h3 style="margin-top:16px;font-size:14px">Andamento del prezzo</h3>
+      <p class="sub">${pts.length ? 'Un solo punto raccolto finora' : 'Nessuno storico pubblicato per questa carta'}: il grafico compare appena c’è una seconda rilevazione.${card.pr.t < 2 ? ' Sotto i 2 € la carta sta nella rotazione lenta, un punto ogni quattro giorni.' : ''}</p>`;
+    return;
+  }
+
+  const span = daysBetween(pts[pts.length-1].date, pts[0].date);
+  let range = RANGES[RANGES.length-1];
+  let fbKey = nearestPeriod(span);
+
+  slot.innerHTML = `
+    <h3 style="margin-top:16px;font-size:14px">Andamento del prezzo</h3>
+    <div class="chips" id="chart-range" role="group" aria-label="Periodo del grafico"></div>
+    <div id="chart-head"></div>
+    <div id="chart-body"></div>
+    <button class="btn" id="export-btn">Esporta immagine</button>
+    <p class="sub" id="export-note">PNG verticale 1080×1350, con la variazione in euro accanto alla percentuale e il periodo scritto per esteso.</p>`;
+
+  const chips = slot.querySelector('#chart-range');
+  const head = slot.querySelector('#chart-head');
+  const body = slot.querySelector('#chart-body');
+  const btn = slot.querySelector('#export-btn');
+  const note = slot.querySelector('#export-note');
+  let win = pts, ins = null;
+
+  const draw = ()=>{
+    chips.innerHTML = RANGES.map(r=>{
+      const ok = r.days==null || span >= r.days;
+      return `<button class="chip" data-r="${r.k}" aria-pressed="${r.k===range.k}" ${ok?'':'disabled style="opacity:.45" title="lo storico non copre ancora questo periodo"'}>${r.label}</button>`;
+    }).join('');
+    chips.querySelector('[aria-pressed="true"]')?.scrollIntoView({ block:'nearest', inline:'nearest' });
+
+    win = windowPoints(pts, range.days, today);
+    // Su "tutto" non esiste una media Cardmarket corrispondente: come ripiego si
+    // usa quella del periodo piu' vicino alla lunghezza della raccolta, e la
+    // riga sotto dice a quale periodo si riferisce davvero.
+    fbKey = range.k!=='all' ? range.k : nearestPeriod(span);
+    ins = computeInsight({
+      points: win, price: card.pr, days: range.days ?? span, today,
+      fallbackPct: card.tr[fbKey]?.pct ?? null,
+      noise: S.cfg.bands.noise,
+    });
+    head.innerHTML = headline(ins, { span, fbKey });
+    S.sheet?.destroy?.();
+    S.sheet = renderChart(body, {
+      points: win,
+      caption: win.some(p=>p.est)
+        ? 'Il tratteggio sono due punti stimati dalle medie Cardmarket, non rilevazioni: servono a dare forma al grafico finché la raccolta è corta, e non entrano in nessuna percentuale.'
+        : '',
+    });
+  };
+
+  chips.onclick = (e)=>{
+    const b = e.target.closest('[data-r]');
+    if(!b || b.disabled) return;
+    range = RANGES.find(r=>r.k===b.dataset.r) || range;
+    draw();
+  };
+
+  btn.onclick = async ()=>{
+    const label = btn.textContent;
+    btn.disabled = true; btn.textContent = 'Genero l’immagine…';
+    try{
+      const mod = await import('./export.mjs');
+      // L'etichetta sull'immagine deve descrivere il numero che c'e' scritto:
+      // se e' una stima, il periodo e' quello della media Cardmarket usata.
+      const periodLabel = ins?.estimated ? PERIOD_LABELS[fbKey]
+        : range.k==='all' ? `${span} giorni raccolti` : range.label;
+      const blob = await mod.buildImage({ card, insight: ins, points: win, periodLabel, generated: today });
+      const how = await mod.shareOrDownload(blob, `poketrend-${card.id}-${today}.png`);
+      note.textContent = how==='shared' ? 'Immagine condivisa.' : 'Immagine scaricata.';
+    }catch(err){
+      note.textContent = 'Immagine non generata: ' + (err?.message || 'errore sconosciuto');
+    }finally{
+      btn.disabled = false; btn.textContent = label;
+    }
+  };
+
+  draw();
+}
+
+function headline(ins, { span, fbKey } = {}){
+  if(!ins) return `<p class="sub">Storico ancora troppo corto per una variazione su questo periodo, e Cardmarket non pubblica una media che lo copra.</p>`;
+  const dir = ins.pct>=0 ? 'up' : 'down';
+  const when = ins.estimated
+    ? `stima sul periodo ${PERIOD_LABELS[fbKey] || ''}: scostamento fra il prezzo di oggi e la media delle vendite pubblicata da Cardmarket, non differenza fra due rilevazioni. Storico raccolto finora: ${span} giorni`
+    : `dal ${fmtDate(ins.fromDate)} al ${fmtDate(ins.toDate)}`;
+  return `<div class="headline">
+      <span class="big ${dir}">${pct(ins.pct)}</span>
+      <span class="abs ${dir}">${fmtSignedEur(ins.abs)}</span>
+      <span class="from">${eur(ins.from)} → ${eur(ins.to)}</span>
+      ${ins.estimated?'<span class="tag est">stima</span>':''}
+      ${ins.weak?'<span class="tag thin">movimento minimo</span>':''}
+    </div>
+    <p class="sub">${when}${ins.weak?' · a questo livello di prezzo la percentuale dice poco: sono '+fmtSignedEur(ins.abs)+' in valore assoluto':''}</p>`;
+}
+
+/** Il periodo standard piu' vicino alla lunghezza della raccolta. */
+function nearestPeriod(span){
+  const days = { d7:7, d30:30, d90:90, d365:365 };
+  return Object.keys(days).reduce((a,b)=> Math.abs(days[b]-span) < Math.abs(days[a]-span) ? b : a);
+}
+
+function gradedFor(c){
+  const cfg = S.cfg.grading;
+  const raw = c.pr.t;
+  if(!(raw>0)) return null;
+  const year = Number(String(c.sr||'').slice(0,4)) || 9999;
+  const era = year<=cfg.eras.vintage.untilYear?'vintage':year<=cfg.eras.retro.untilYear?'retro':'modern';
+  const tiers = cfg.psa10MultiplierOnRaw[era];
+  let mult = tiers[tiers.length-1].x;
+  for(const t of tiers){ if(t.maxRaw==null || raw<=t.maxRaw){ mult=t.x; break; } }
+  const psa10 = raw*mult;
+  const grades = ['10','9.5','9','8'];
+  const houses = cfg.houses.map(h=>({
+    name:h.name, country:h.country, confidence:h.confidence,
+    grades: Object.fromEntries(grades.map(g=>[g, h.grades.includes(g)&&cfg.gradeRatioOfPsa10[g]!=null
+      ? Math.round(psa10*cfg.gradeRatioOfPsa10[g]*h.factor*100)/100 : null])),
+  }));
+  return { grades, houses, era };
+}
+
+function cmLink(c){
+  const p = new URLSearchParams();
+  if(CM_LANG[S.lang]) p.set('idLanguage', String(CM_LANG[S.lang]));
+  if(CM_COND[S.cond]) p.set('minCondition', String(CM_COND[S.cond]));
+  p.set('sortBy','price_asc');
+  return c.pr.cm
+    ? `https://www.cardmarket.com/it/Pokemon/Products/Singles?idProduct=${c.pr.cm}&${p}`
+    : `https://www.cardmarket.com/it/Pokemon/Products/Search?searchString=${encodeURIComponent(c.n+' '+c.l)}&${p}`;
+}
+function ebayLink(c){
+  return S.cfg.grading.verificaReale.ebaySoldUrl.replace('{query}',
+    encodeURIComponent(`${c.n} ${c.l} ${c.sn} pokemon psa`));
+}
+function pcLink(c){
+  return S.cfg.grading.verificaReale.priceChartingUrl.replace('{query}',
+    encodeURIComponent(`${c.n} ${c.sn}`));
+}
+
+function renderInfo(){
+  const cov = S.cfg.coverage;
+  const src = cov.bySource || {};
+  $('#info').innerHTML = `
+    <div class="card"><h2>Da dove vengono i numeri</h2>
+      <p class="sub">Prezzi <b>Cardmarket in euro</b>, letti da TCGdex e aggiornati ogni giorno. È il mercato europeo, quello dove compri e vendi tu. Ogni notte vengono rilette tutte le carte sopra i 2 € — quelle che hanno un grafico — più un quarto delle altre a rotazione.</p>
+      <div class="kv" style="margin-top:12px">
+        <div><b>${cov.totalPriced}</b><span>carte con prezzo</span></div>
+        <div><b>${cov.refreshedToday}</b><span>riaggiornate oggi</span></div>
+        <div><b>${cov.historyDays}</b><span>giorni di storico proprio</span></div>
+        <div><b>${fmtDate(cov.historyStart)}</b><span>raccolta iniziata</span></div>
+      </div>
+    </div>
+    <div class="card"><h2>Che cosa è rilevato e che cosa è stimato</h2>
+      <table><tbody>
+        <tr><td>Prezzo raw NM, offerta più bassa, medie 7 e 30 giorni</td><td><span class="tag">rilevato</span></td></tr>
+        <tr><td>Variazione 7 giorni e 1 mese</td><td><span class="tag est">${(src.d7?.history||0)>0?'misto':'stima'}</span></td></tr>
+        <tr><td>Variazione 3 e 12 mesi</td><td><span class="tag">${cov.historyDays>=90?'rilevato':'dal '+fmtDate(cov.availableFrom.d90)}</span></td></tr>
+        <tr><td>Prezzo per qualità diversa da NM</td><td><span class="tag est">stima</span></td></tr>
+        <tr><td>Valori delle carte gradate</td><td><span class="tag est">stima</span></td></tr>
+        <tr><td>Prezzo per lingua specifica</td><td><span class="tag est">non disponibile</span></td></tr>
+        <tr><td>I due punti tratteggiati a inizio grafico</td><td><span class="tag est">stima</span></td></tr>
+      </tbody></table>
+    </div>
+    <div class="card"><h2>I due punti tratteggiati</h2>
+      <p class="sub">Il grafico di ogni carta parte con due punti ricavati dalle medie a 7 e 30 giorni che Cardmarket pubblica dentro ogni risposta. Non sono rilevazioni: una media descrive una finestra, non un giorno, quindi vengono messe al <b>centro</b> della loro finestra — quattro e quindici giorni fa — e non al bordo. Servono a non farti trovare un grafico con un punto solo finché la raccolta è corta. Non entrano in nessuna percentuale: né in classifica, né nella variazione della scheda, né sull'immagine esportata.</p>
+    </div>
+    <div class="card"><h2>L'immagine da pubblicare</h2>
+      <p class="sub">Il pulsante in fondo a ogni scheda genera un PNG verticale con i dati di quella carta. Tre cose sono fisse e non si possono disattivare: la percentuale esce sempre accompagnata dalla variazione in euro, il periodo è scritto con le date vere, e se il numero è una stima l'immagine lo dice in evidenza. Su una carta da 6 € un gradino da un euro vale il 16%: è così che nascono i "+33%" che non vogliono dire niente.</p>
+    </div>
+    <div class="card"><h2>I tre limiti che contano</h2>
+      <p class="sub" style="margin-bottom:8px"><b>1. La lingua non cambia il prezzo mostrato.</b> Cardmarket pubblica il trend per prodotto, non per lingua della stampa: il prezzo di una 151 italiana non esiste come dato storico pubblico. Il selettore lingua apre le offerte reali filtrate, ed è lì che vedi il prezzo italiano vero.</p>
+      <p class="sub" style="margin-bottom:8px"><b>2. Le gradate sono un modello, non un listino.</b> Nessuna fonte gratuita espone prezzi di carte gradate. Per PSA, CGC e BGS la stima è tarata su rapporti di mercato pubblicati; per GRAAD e AP Grading il mercato è troppo sottile perché un numero significhi qualcosa.</p>
+      <p class="sub"><b>3. Le variazioni a 7 e 30 giorni partono da una stima.</b> Finché lo storico proprio non copre il periodo, la variazione è lo scostamento fra il trend corrente e la media delle vendite recenti pubblicata da Cardmarket. Si avvicina molto, ma non è una differenza punto a punto: quando lo diventa, la riga dice "storico".</p>
+    </div>
+    <div class="card"><h2>Perché una carta da 3 centesimi non entra mai in classifica</h2>
+      <p class="sub">Una comune che passa da 0,03 a 0,09 € è un +200% che non significa niente. Entrano in classifica solo le carte sopra ${eur(S.cfg.bands.noise.minTrend)} che si sono mosse di almeno ${eur(S.cfg.bands.noise.minAbsChangeEur)} in valore assoluto. E quando le quattro misure di prezzo di una carta divergono troppo fra loro — segno che gli scambi sono pochi — la carta viene marcata "pochi scambi".</p>
+    </div>`;
+}
+
+function fmtDate(iso){
+  if(!iso) return '—';
+  const d = new Date(iso+'T00:00:00Z');
+  return isNaN(d) ? iso : d.toLocaleDateString('it-IT',{day:'2-digit',month:'short',year:'numeric',timeZone:'UTC'});
+}
+function debounce(f,ms){ let t; return (...a)=>{ clearTimeout(t); t=setTimeout(()=>f(...a),ms); }; }
+
+if('serviceWorker' in navigator) navigator.serviceWorker.register('./sw.js').catch(()=>{});
+</script>
+</body>
+</html>
